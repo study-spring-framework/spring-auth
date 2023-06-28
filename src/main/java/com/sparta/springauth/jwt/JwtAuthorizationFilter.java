@@ -30,34 +30,33 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain filterChain) throws ServletException, IOException {
-
+        log.info(req.getRequestURI());
         String tokenValue = jwtUtil.getTokenFromRequest(req);
-
         if (StringUtils.hasText(tokenValue)) {
+            log.info("토큰 있음");
             // JWT 토큰 substring
             tokenValue = jwtUtil.substringToken(tokenValue);
             log.info(tokenValue);
-
             if (!jwtUtil.validateToken(tokenValue)) {
                 log.error("Token Error");
                 return;
             }
-
             Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
-
             try {
                 setAuthentication(info.getSubject());
             } catch (Exception e) {
                 log.error(e.getMessage());
                 return;
             }
+        }else{
+            log.info("토큰 없음");
         }
-
         filterChain.doFilter(req, res);
     }
 
     // 인증 처리
     public void setAuthentication(String username) {
+        log.info("인증 처리");
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         Authentication authentication = createAuthentication(username);
         context.setAuthentication(authentication);
@@ -67,6 +66,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     // 인증 객체 생성
     private Authentication createAuthentication(String username) {
+        log.info("인증 객체 생성");
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
